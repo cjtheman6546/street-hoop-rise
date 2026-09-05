@@ -1,1 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Street Hoops Rise 🏀</title>
+<style>
+body{margin:0;background:#111;color:white;font-family:Arial;text-align:center}
+h1{margin:15px 0}
+#game{width:95%;max-width:800px;background:#b8733d;border:4px solid #333;border-radius:12px}
+.hud{display:flex;justify-content:center;gap:30px;font-size:20px;margin:10px}
+button{padding:14px 22px;margin:6px;border:0;border-radius:10px;background:#f5a623;font-weight:bold;font-size:16px}
+</style>
+</head>
+<body>
 
+<h1>🏀 Street Hoops Rise</h1>
+
+<div class="hud">
+<div>Score: <span id="score">0</span></div>
+<div>Coins: <span id="coins">0</span></div>
+<div>Best: <span id="best">0</span></div>
+</div>
+
+<canvas id="game" width="800" height="450"></canvas>
+
+<div>
+<button onclick="move(-1)">⬅️ MOVE</button>
+<button onclick="shoot()">SHOOT 🏀</button>
+<button onclick="move(1)">MOVE ➡️</button>
+</div>
+
+<button onclick="restart()">RESTART</button>
+
+<p>A/D or arrow keys to move • Space to shoot</p>
+
+<script>
+const canvas=document.getElementById("game");
+const ctx=canvas.getContext("2d");
+
+let score=0;
+let coins=0;
+let best=localStorage.getItem("best")||0;
+
+let player={
+ x:130,
+ y:340
+};
+
+let ball=null;
+
+function drawCourt(){
+ ctx.fillStyle="#b8733d";
+ ctx.fillRect(0,0,800,450);
+
+ ctx.strokeStyle="white";
+ ctx.lineWidth=4;
+ ctx.strokeRect(15,15,770,420);
+
+ ctx.beginPath();
+ ctx.arc(650,360,100,Math.PI,Math.PI*2);
+ ctx.stroke();
+
+ // backboard
+ ctx.fillStyle="white";
+ ctx.fillRect(680,90,12,100);
+
+ ctx.strokeStyle="red";
+ ctx.strokeRect(625,145,70,45);
+
+ // rim
+ ctx.strokeStyle="orange";
+ ctx.lineWidth=6;
+ ctx.beginPath();
+ ctx.arc(650,190,25,0,Math.PI*2);
+ ctx.stroke();
+}
+
+function drawPlayer(){
+ ctx.fillStyle="#222";
+ ctx.fillRect(player.x,player.y+25,40,45);
+
+ ctx.fillStyle="#d99b6c";
+ ctx.beginPath();
+ ctx.arc(player.x+20,player.y+10,15,0,Math.PI*2);
+ ctx.fill();
+
+ ctx.fillStyle="#2474d8";
+ ctx.fillRect(player.x+5,player.y+25,30,35);
+}
+
+function drawBall(){
+ if(!ball)return;
+
+ ctx.fillStyle="#f28c28";
+ ctx.beginPath();
+ ctx.arc(ball.x,ball.y,11,0,Math.PI*2);
+ ctx.fill();
+
+ ctx.strokeStyle="black";
+ ctx.stroke();
+}
+
+function move(direction){
+ player.x+=direction*35;
+
+ if(player.x<25)player.x=25;
+ if(player.x>730)player.x=730;
+}
+
+function shoot(){
+ if(ball)return;
+
+ ball={
+   x:player.x+25,
+   y:player.y+10,
+   vx:8,
+   vy:-11
+ };
+}
+
+function update(){
+ if(ball){
+   ball.x+=ball.vx;
+   ball.y+=ball.vy;
+   ball.vy+=0.3;
+
+   let distance=Math.hypot(ball.x-650,ball.y-190);
+
+   if(distance<22 && ball.vy>0){
+     score++;
+     coins+=10;
+
+     if(score>best){
+       best=score;
+       localStorage.setItem("best",best);
+     }
+
+     ball=null;
+   }
+
+   if(ball && (ball.y>450 || ball.x>800)){
+     ball=null;
+   }
+ }
+
+ document.getElementById("score").textContent=score;
+ document.getElementById("coins").textContent=coins;
+ document.getElementById("best").textContent=best;
+}
+
+function draw(){
+ drawCourt();
+ drawPlayer();
+ drawBall();
+}
+
+function gameLoop(){
+ update();
+ draw();
+ requestAnimationFrame(gameLoop);
+}
+
+function restart(){
+ score=0;
+ coins=0;
+ ball=null;
+ player.x=130;
+}
+
+document.addEventListener("keydown",function(e){
+ if(e.key==="ArrowLeft"||e.key.toLowerCase()==="a"){
+   move(-1);
+ }
+
+ if(e.key==="ArrowRight"||e.key.toLowerCase()==="d"){
+   move(1);
+ }
+
+ if(e.code==="Space"){
+   shoot();
+ }
+});
+
+gameLoop();
+</script>
+
+</body>
+</html>
